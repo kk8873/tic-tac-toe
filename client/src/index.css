@@ -1,0 +1,252 @@
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #6b21a8 0%, #7c2d92 50%, #be185d 100%);
+  background-size: 300% 300%;
+  animation: gradientShift 8s ease infinite;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
+}
+
+.game-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 900;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+.game-cell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s;
+}
+
+.game-cell:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.95));
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.game-cell:hover::before {
+  left: 100%;
+}
+
+.game-cell:active {
+  transform: scale(1.02) translateY(0px);
+  transition-duration: 0.1s;
+}
+
+.game-cell.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.5)) !important;
+}
+
+.game-cell.x {
+  color: #ef4444;
+  text-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+  animation: cellAppear 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.game-cell.o {
+  color: #3b82f6;
+  text-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  animation: cellAppear 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes cellAppear {
+  0% {
+    transform: scale(0) rotate(180deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-board {
+    max-width: 300px;
+    gap: 10px;
+    padding: 16px;
+  }
+  
+  .game-cell {
+    font-size: 2rem;
+    border-radius: 12px;
+  }
+  
+  body {
+    padding: 0 12px;
+  }
+  
+  /* Better mobile spacing for menu */
+  .max-w-sm {
+    margin: 0 auto;
+    width: calc(100% - 24px);
+    max-width: 384px;
+  }
+  
+  /* Ensure consistent button widths on mobile */
+  .max-w-sm .space-y-6 > * {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .game-board {
+    max-width: 280px;
+    gap: 8px;
+    padding: 12px;
+  }
+  
+  .game-cell {
+    font-size: 1.8rem;
+  }
+}
+
+/* Utility classes for better mobile experience */
+.animate-in {
+  animation: slideInUp 0.4s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: hover) and (pointer: fine) {
+  .game-cell:hover::before {
+    left: 100%;
+  }
+}
+
+/* Enhanced focus states for accessibility */
+button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
+}
+
+input:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.8);
+  outline-offset: 2px;
+}
+
+/* Prevent zoom on iOS when input is focused */
+@media screen and (max-width: 768px) {
+  input[type="text"] {
+    font-size: 16px;
+  }
+}
+
+/* Custom hover effects for buttons and inputs - consistent light yellow */
+.find-match-button:hover {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%) !important;
+  color: rgba(31, 41, 55, 1) !important;
+  box-shadow: 0 8px 20px rgba(251, 191, 36, 0.3) !important;
+}
+
+.create-private-button:hover {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  color: rgba(31, 41, 55, 1) !important;
+  box-shadow: 0 8px 16px rgba(251, 191, 36, 0.3) !important;
+}
+
+.join-private-button:hover {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  color: rgba(31, 41, 55, 1) !important;
+  box-shadow: 0 8px 16px rgba(251, 191, 36, 0.3) !important;
+}
+
+.join-game-button:hover {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  color: rgba(31, 41, 55, 1) !important;
+  box-shadow: 0 8px 16px rgba(251, 191, 36, 0.3) !important;
+}
+
+.player-input:hover {
+  background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%) !important;
+  border-color: #fbbf24 !important;
+}
+
+/* Force yellow color for Tic-Tac-Toe title */
+h1.text-yellow-400,
+.game-title {
+  color: #fbbf24 !important;
+  text-shadow: 0 4px 8px rgba(251, 191, 36, 0.3) !important;
+}
