@@ -4,12 +4,22 @@ A **production-ready server-authoritative** multiplayer Tic-Tac-Toe Progressive 
 
 🚀 **[Live Demo](https://your-tictactoe-app.vercel.app)** | 🔥 **[Server API](https://tictactoe-server.onrender.com)** | 📊 **[Health Check](https://tictactoe-server.onrender.com/health)**
 
-Tic Tac Toe Game Showcase :-
+
+
+
+## 🎮 Tic Tac Toe Game Showcase
+
 <p align="center">
-  <a href="https://github.com/user-attachments/assets/b92e3ef1-97ca-4584-a9f9-3c6914b132c0">
-    <img src="https://github.com/user-attachments/assets/f3c6f019-5f36-4ea0-85ce-bd61335fafec" width="250" alt="Watch Demo">
+  <a href="https://github.com/user-attachments/assets/b92e3ef1-97ca-4584-a9f9-3c6914b132c0" target="_blank">
+    <img src="https://github.com/user-attachments/assets/f3c6f019-5f36-4ea0-85ce-bd61335fafec" width="250" alt="Tic Tac Toe Logo"><br>
+    <img src="https://github.com/user-attachments/assets/94702933-3703-4522-8d53-c5667840ed27" width="60" alt="Play Button">
   </a>
 </p>
+
+<p align="center">
+  ▶️ <b>Click above to watch the gameplay demo!</b>
+</p>
+
 
 ---
 
