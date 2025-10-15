@@ -5,7 +5,12 @@ A **production-ready server-authoritative** multiplayer Tic-Tac-Toe Progressive 
 🚀 **[Live Demo](https://your-tictactoe-app.vercel.app)** | 🔥 **[Server API](https://tictactoe-server.onrender.com)** | 📊 **[Health Check](https://tictactoe-server.onrender.com/health)**
 
 Tic Tac Toe Game Showcase :-
-https://github.com/user-attachments/assets/21a418a0-4420-4912-bc8e-94d211697c4f
+<p align="center">
+  <a href="https://github.com/user-attachments/assets/b92e3ef1-97ca-4584-a9f9-3c6914b132c0">
+    <img src="https://github.com/user-attachments/assets/f3c6f019-5f36-4ea0-85ce-bd61335fafec" width="250" alt="Watch Demo">
+  </a>
+</p>
+
 ---
 
 ## 📋 Table of Contents
