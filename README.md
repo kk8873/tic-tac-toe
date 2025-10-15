@@ -131,16 +131,10 @@ multiplayer-tictactoe/
 - **Symbol Assignment**: Automatic X/O assignment with role switching on rematch
 
 ### **🔍 Matchmaking System**
-```typescript
-// Two ways to play:
-1. Quick Match: Auto-pair with waiting players
-2. Private Games: Share 5-digit game ID with friends
-
-// Queue Management:
-- Real-time queue position updates
-- Automatic pairing when opponent found
-- Connection status indicators
-```
+- **Quick Match**: Auto-pair with waiting players in real-time queue
+- **Private Games**: Share 5-digit game ID with friends for direct matching  
+- **Queue Management**: Real-time position updates and connection status
+- **Fair Pairing**: FIFO queue system ensures fair matchmaking order
 
 ### **🏆 Leaderboard & Stats**
 - **Points System**: Win (+200), Draw (+50), Loss (+0)
@@ -161,168 +155,42 @@ multiplayer-tictactoe/
 ### **Frontend Architecture**
 
 #### **Custom Hook Pattern**
-```typescript
-// useGame.ts - Central state management
-const useGame = (): UseGameReturn => {
-  const [gamePhase, setGamePhase] = useState<GamePhase>('menu');
-  const [gameState, setGameState] = useState<GameState | null>(null);
-  
-  // Socket connection management
-  useEffect(() => {
-    const socket = socketService.connect(
-      import.meta.env.VITE_SERVER_URL || 'http://localhost:3000'
-    );
-    
-    // Event handlers for real-time updates
-    socketService.onGameFound((data) => {
-      setGameState(data.game);
-      setPlayerSymbol(data.yourSymbol);
-      setGamePhase('playing');
-    });
-    
-    return () => socketService.disconnect();
-  }, []);
-};
-```
+- **Central State Management**: `useGame.ts` hook manages all game state and phases
+- **Socket Integration**: Automatic connection management with reconnection logic
+- **Event Handling**: Type-safe WebSocket event listeners for real-time updates
+- **Lifecycle Management**: Proper cleanup on component unmount
 
 #### **Socket Service Architecture**
-```typescript
-// Singleton service for WebSocket management
-class SocketService {
-  private socket: Socket<SocketEvents> | null = null;
-  
-  connect(serverUrl: string) {
-    this.socket = io(serverUrl, {
-      transports: ['websocket', 'polling'],
-      timeout: 60000
-    });
-    return this.socket;
-  }
-  
-  // Type-safe event methods
-  joinQueue(playerName: string) {
-    this.socket?.emit('join_queue', { name: playerName });
-  }
-  
-  onGameFound(callback: (data: GameFoundData) => void) {
-    this.socket?.on('game_found', callback);
-  }
-}
-```
+- **Singleton Pattern**: Single WebSocket connection shared across components
+- **Transport Fallback**: WebSocket preferred, polling as fallback
+- **Type Safety**: Full TypeScript interfaces for client-server communication
+- **Connection Recovery**: Automatic reconnection with exponential backoff
 
 ### **Backend Architecture**
 
 #### **Server-Authoritative Game Engine**
-```typescript
-// gameLogic.ts - Core game validation
-export class GameLogic {
-  private games = new Map<string, GameState>();
-  private players = new Map<string, Player>();
-
-  makeMove(move: GameMove): GameMoveResult {
-    const game = this.games.get(move.gameId);
-    
-    // Multi-layer validation
-    if (game.status !== 'playing') return { success: false, error: 'Game not active' };
-    if (game.currentPlayer !== move.playerId) return { success: false, error: 'Not your turn' };
-    if (game.board[move.position] !== null) return { success: false, error: 'Cell occupied' };
-    
-    // Apply move
-    const player = this.players.get(move.playerId)!;
-    game.board[move.position] = player.symbol;
-    
-    // Check win conditions
-    const winner = this.checkWinner(game.board);
-    if (winner || this.isBoardFull(game.board)) {
-      this.endGame(game, winner);
-    } else {
-      this.switchTurn(game);
-    }
-    
-    return { success: true, game };
-  }
-
-  private checkWinner(board: (string | null)[]): string | null {
-    const winPatterns = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-      [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-      [0, 4, 8], [2, 4, 6]             // diagonals
-    ];
-    
-    for (const [a, b, c] of winPatterns) {
-      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-        return board[a];
-      }
-    }
-    return null;
-  }
-}
-```
+- **Multi-layer Validation**: Game state, player authorization, and move legality checks
+- **Efficient Data Structures**: Map-based storage for O(1) game and player lookups
+- **Win Detection**: Comprehensive pattern matching for all win conditions
+- **State Management**: Atomic game state updates with proper turn switching
+- **Memory Management**: Automatic cleanup of completed games
 
 #### **Matchmaking Service**
-```typescript
-// matchmaking.ts - Player pairing logic
-export class MatchmakingService {
-  private waitingPlayers: Player[] = [];
-  
-  addPlayerToQueue(player: Player): MatchResult {
-    // Check for waiting opponent
-    if (this.waitingPlayers.length > 0) {
-      const opponent = this.waitingPlayers.shift()!;
-      
-      // Create new game with both players
-      const game = this.gameLogic.createGame([opponent, player]);
-      
-      return {
-        matched: true,
-        game,
-        players: [opponent, player]
-      };
-    }
-    
-    // Add to waiting queue
-    this.waitingPlayers.push(player);
-    return { matched: false, queuePosition: this.waitingPlayers.length };
-  }
-  
-  createPrivateGame(player: Player): PrivateGameResult {
-    const gameId = this.generateGameId(); // 5-digit code
-    const game = this.gameLogic.createPrivateGame(player, gameId);
-    
-    return { gameId, game };
-  }
-}
-```
+- **Queue System**: FIFO queue for fair player pairing
+- **Instant Matching**: Real-time opponent discovery and game creation
+- **Private Games**: 5-digit game ID generation for friend matching
+- **Room Management**: Isolated game instances with unique identifiers
+- **Player Tracking**: Session-based player identification and reconnection
 
 ---
 
 ## 🌐 WebSocket Communication
 
 ### **Event Architecture**
-```typescript
-interface SocketEvents {
-  // Client → Server Events
-  join_queue: (data: { name: string }) => void;
-  leave_queue: () => void;
-  make_move: (data: { gameId: string; position: number }) => void;
-  create_private_game: (data: { name: string }) => void;
-  join_private_game: (data: { name: string; gameId: string }) => void;
-  request_rematch: (data: { gameId: string }) => void;
-  
-  // Server → Client Events
-  queue_joined: (data: { position: number; playerId: string }) => void;
-  game_found: (data: { game: GameState; yourSymbol: 'X' | 'O'; playerId: string }) => void;
-  game_update: (data: { game: GameState }) => void;
-  game_finished: (data: { 
-    game: GameState; 
-    message: string; 
-    pointsAwarded: { [playerId: string]: number };
-    leaderboard: LeaderboardEntry[];
-  }) => void;
-  private_game_created: (data: { gameId: string; game: GameState }) => void;
-  error: (data: { message: string; code?: string }) => void;
-}
-```
+- **Type-Safe Communication**: Full TypeScript interfaces for client-server events
+- **Bidirectional Events**: Real-time communication in both directions
+- **Error Handling**: Structured error responses with codes and messages
+- **Game State Sync**: Automatic state synchronization across all players
 
 ### **Real-time Communication Flow**
 
@@ -347,40 +215,19 @@ Server detects win/draw → Updates stats → Server: game_finished → Both pla
 ```
 
 ### **Room-Based Broadcasting**
-```typescript
-// Each game has its own Socket.io room
-socket.join(gameId);  // Players join game room
-io.to(gameId).emit('game_update', { game });  // Broadcast to room only
-```
+- **Isolated Games**: Each game operates in its own Socket.io room
+- **Targeted Communication**: Messages broadcast only to relevant players
+- **Scalable Architecture**: Efficient message routing for multiple concurrent games
 
 ---
 
 ## 📱 PWA Features
 
 ### **Progressive Web App Configuration**
-```typescript
-// vite.config.ts - PWA Setup
-VitePWA({
-  registerType: 'autoUpdate',
-  includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
-  manifest: {
-    name: 'Multiplayer Tic-Tac-Toe',
-    short_name: 'TicTacToe',
-    description: 'Real-time multiplayer Tic-Tac-Toe game',
-    theme_color: '#1f2937',
-    background_color: '#111827',
-    display: 'standalone',
-    start_url: '/',
-    icons: [
-      { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-      { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' }
-    ]
-  },
-  workbox: {
-    globPatterns: ['**/*.{js,css,html,ico,png,svg}']
-  }
-})
-```
+- **Auto-Update Service Worker**: Automatic app updates with user notification
+- **App Manifest**: Native app-like installation with custom icons and theme
+- **Offline Asset Caching**: Complete static asset caching for offline use
+- **Standalone Display**: Full-screen app experience without browser UI
 
 ### **Offline Capabilities**
 - **Asset Caching**: All static assets cached for offline use
@@ -405,17 +252,12 @@ VitePWA({
 
 ### **1. Clone & Install**
 ```bash
-# Clone the repository
 git clone <your-repository-url>
 cd multiplayer-tictactoe
 
-# Install client dependencies
-cd client
-npm install
-
-# Install server dependencies
-cd ../server
-npm install
+# Install dependencies
+cd client && npm install
+cd ../server && npm install
 ```
 
 ### **2. Environment Setup**
@@ -444,12 +286,10 @@ CLIENT_URL=http://localhost:5173
 ### **3. Development Servers**
 ```bash
 # Terminal 1 - Start server (port 3000)
-cd server
-npm run dev
+cd server && npm run dev
 
 # Terminal 2 - Start client (port 5173)  
-cd client
-npm run dev
+cd client && npm run dev
 ```
 
 ### **4. Test the Application**
@@ -466,11 +306,7 @@ npm run dev
 
 #### **Option 1: Vercel CLI**
 ```bash
-cd client
-npm install -g vercel
-vercel --prod
-
-# Follow prompts to link/create project
+cd client && npm install -g vercel && vercel --prod
 ```
 
 #### **Option 2: Git Integration**
@@ -523,76 +359,23 @@ services:
 ## 📊 API Documentation
 
 ### **REST Endpoints**
+- **GET /health**: Server health check and uptime status
+- **GET /api/leaderboard**: Real-time player rankings and statistics
+- **GET /api/games**: Current game activity and queue status
 
-#### **Health Check**
-```http
-GET /health
-Content-Type: application/json
+### **WebSocket Events**
 
-Response:
-{
-  "status": "OK",
-  "timestamp": "2024-01-15T10:30:00.000Z",
-  "uptime": 3600
-}
-```
+#### **Core Game Events**
+- **join_queue**: Enter matchmaking queue with player name
+- **game_found**: Server notification when match is found
+- **make_move**: Submit game move with position
+- **game_update**: Real-time game state synchronization
+- **game_finished**: Game completion with results and points
 
-#### **Leaderboard**
-```http
-GET /api/leaderboard
-Content-Type: application/json
-
-Response:
-{
-  "leaderboard": [
-    {
-      "playerId": "player_123",
-      "name": "John",
-      "points": 1500,
-      "wins": 15,
-      "losses": 5,
-      "draws": 2,
-      "gamesPlayed": 22,
-      "winRate": 0.68,
-      "rank": 1
-    }
-  ]
-}
-```
-
-#### **Active Games**
-```http
-GET /api/games
-Content-Type: application/json
-
-Response:
-{
-  "totalGames": 5,
-  "activeGames": 3,
-  "waitingPlayers": 2
-}
-```
-
-### **WebSocket Events Reference**
-
-#### **Client Events**
-| Event | Data | Description |
-|-------|------|-------------|
-| `join_queue` | `{ name: string }` | Join matchmaking queue |
-| `leave_queue` | `{}` | Leave matchmaking queue |
-| `make_move` | `{ gameId: string, position: number }` | Make game move |
-| `create_private_game` | `{ name: string }` | Create private game room |
-| `join_private_game` | `{ name: string, gameId: string }` | Join private game |
-| `request_rematch` | `{ gameId: string }` | Request game rematch |
-
-#### **Server Events**
-| Event | Data | Description |
-|-------|------|-------------|
-| `game_found` | `{ game: GameState, yourSymbol: string }` | Match found |
-| `game_update` | `{ game: GameState }` | Game state updated |
-| `game_finished` | `{ game, message, points, leaderboard }` | Game completed |
-| `private_game_created` | `{ gameId: string, game: GameState }` | Private game ready |
-| `error` | `{ message: string, code?: string }` | Error occurred |
+#### **Private Game Events**
+- **create_private_game**: Generate private game room
+- **join_private_game**: Join game using 5-digit code
+- **request_rematch**: Initiate rematch with role switching
 
 ---
 
@@ -746,35 +529,16 @@ app.use(cors({
 
 ## 🧪 Testing Strategy
 
-### **Manual Testing Scenarios**
+### **Functional Testing**
+- **Core Gameplay**: Matchmaking, move validation, win/draw detection
+- **Real-time Sync**: WebSocket communication and state updates
+- **Private Games**: Game ID generation and friend matching
+- **Edge Cases**: Disconnections, spam protection, invalid inputs
 
-#### **Core Functionality**
-- [ ] Two players can join queue and get matched
-- [ ] Game moves are server-validated and synchronized
-- [ ] Win/draw conditions work correctly across all patterns
-- [ ] Private games work with game ID sharing
-- [ ] Rematch functionality switches player symbols
-- [ ] Leaderboard updates correctly after games
-
-#### **Edge Cases**
-- [ ] Player disconnection during game
-- [ ] Rapid move attempts (spam protection)
-- [ ] Invalid game IDs for private games
-- [ ] Queue abandonment (leave before match)
-- [ ] Multiple tabs/windows from same player
-
-#### **Mobile & PWA**
-- [ ] Touch interactions work smoothly
-- [ ] PWA installation on mobile devices
-- [ ] Offline functionality (cached assets)
-- [ ] Responsive design across screen sizes
-- [ ] Orientation changes maintain state
-
-### **Load Testing**
-- **Concurrent Connections**: 100+ simultaneous users
-- **Game Performance**: 50+ concurrent games
-- **Memory Stability**: 24+ hour stress test
-- **Connection Recovery**: Network interruption handling
+### **Performance Testing**
+- **Load Capacity**: 100+ concurrent connections, 50+ simultaneous games
+- **Stability**: 24+ hour stress testing for memory leaks
+- **Recovery**: Network interruption and reconnection handling
 
 ---
 
@@ -813,6 +577,6 @@ The codebase serves as a comprehensive example of modern web development techniq
 
 ---
 
-**Built with ❤️ for LILA Engineering Assignment**
+**Built with ❤️ for LILA  Assignment**
 
 *This implementation demonstrates production-ready full-stack development skills with real-time multiplayer gaming architecture, mobile-first PWA design, and comprehensive deployment strategies suitable for modern web applications.*
