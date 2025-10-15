@@ -2,7 +2,8 @@
 
 A **production-ready server-authoritative** multiplayer Tic-Tac-Toe Progressive Web App demonstrating advanced full-stack development with real-time gaming architecture.
 
-🚀 **[Live Demo](https://your-tictactoe-app.vercel.app)** | 🔥 **[Server API](https://tictactoe-server.onrender.com)** | 📊 **[Health Check](https://tictactoe-server.onrender.com/health)**
+🚀 **🔗 **Live Demo:** [https://tic-tack-one.vercel.app/](https://tic-tack-one.vercel.app)** 
+| 🔥 **[Server API](https://tictactoe-server.onrender.com)** | 📊 **[Health Check](https://tictactoe-server.onrender.com/health)**
 
 
 
